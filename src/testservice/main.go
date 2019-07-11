@@ -33,8 +33,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/genproto"
-	money "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/money"
+	pb "github.com/Joseph329123/microservices-demo/src/testservice/genproto"
+	money "github.com/Joseph329123/microservices-demo/src/testservice/money"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
