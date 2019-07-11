@@ -139,6 +139,60 @@ func main() {
 		Handler:     handler,
 		Propagation: &b3.HTTPFormat{}}
 
+	/* Get Response Times */
+
+	/* ProductCatalogueService */
+	for i := 0; i < 3; i++ {
+		 svc.timeProductCatalogueServiceEmptyRequest(ctx)
+	}
+	for i := 0; i < 3; i++ {
+		svc.timeProductCatalogueServiceGetProductRequest(ctx, "OLJCESPC7Z")
+	}
+	for i := 0; i < 3; i++ {
+		svc.timeProductCatalogueServiceSearchProductsRequest(ctx, "Vintage Typewriter")
+	}
+
+	/* RecommendationService */
+	productIDs := []string{"OLJCESPC7Z", "66VCHSJNUP", "1YMWWN1N4O"}
+	for i := 0; i < 3; i++ {
+		svc.timeRecommendationServiceListRecommendationsRequest(ctx, "dummy", productIDs)
+	}
+
+	/* CheckoutService */
+	for i := 0; i < 3; i++ {
+		svc.timeCheckoutServicePlaceOrderRequest(ctx)
+	}
+
+	/* ShippingService */
+	itemA := &pb.CartItem{ProductId: "OLJCESPC7Z", Quantity: 1}
+	itemB := &pb.CartItem{ProductId: "66VCHSJNUP", Quantity: 1}
+	items := []*pb.CartItem{itemA, itemB}
+	
+	for i := 0; i < 3; i++ {
+		svc.timeShippingServiceGetQuoteRequest(ctx, items, "USD")
+	}
+
+
+	address := &pb.Address{
+					StreetAddress: "1600 Amphitheatre Parkway",
+					City:          "Mountain View",
+					State:         "CA",
+					ZipCode:       94043,
+					Country:       "Mountain View"}
+
+	for i:= 0; i < 3; i++ {
+		svc.timeShippingServiceShipOrderRequest(ctx, address, items)
+	}
+
+	/* CurrencyService */
+	from := pb.Money{CurrencyCode: "EUR",
+		Units: 1,
+		Nanos: 0}
+	to := "USD"
+	for i:= 0; i < 3; i++ {
+		svc.timeCurrencyServiceCurrencyConversionRequest(ctx, money, to)
+	}
+
 	log.Infof("starting server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
 }
