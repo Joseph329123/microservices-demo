@@ -3,7 +3,7 @@ RUN apk add --no-cache ca-certificates git && \
       wget -qO/go/bin/dep https://github.com/golang/dep/releases/download/v0.5.0/dep-linux-amd64 && \
       chmod +x /go/bin/dep
 
-ENV PROJECT github.com/GoogleCloudPlatform/microservices-demo/src/frontend
+ENV PROJECT github.com/Joseph329123/microservices-demo/src/testservice
 WORKDIR /go/src/$PROJECT
 
 # restore dependencies
@@ -15,9 +15,9 @@ RUN go install .
 FROM alpine as release
 RUN apk add --no-cache ca-certificates \
     busybox-extras net-tools bind-tools
-WORKDIR /frontend
-COPY --from=builder /go/bin/frontend /frontend/server
+WORKDIR /testservice
+COPY --from=builder /go/bin/testservice /testservice/server
 COPY ./templates ./templates
 COPY ./static ./static
 EXPOSE 8080
-ENTRYPOINT ["/frontend/server"]
+ENTRYPOINT ["/testservice/server"]
