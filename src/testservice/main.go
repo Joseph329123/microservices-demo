@@ -196,6 +196,10 @@ func main() {
 		svc.timeCurrencyServiceCurrencyConversionRequest(ctx, &money, to)
 	}
 
+	for i := 0; i < 3; i++ {
+		svc.timeCurrencyServiceEmptyRequest(ctx)
+	}
+
 
 	log.Infof("starting server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
