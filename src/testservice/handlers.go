@@ -28,8 +28,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	pb "github.com/GoogleCloudPlatform/microservices-demo/src/frontend/genproto"
-	"github.com/GoogleCloudPlatform/microservices-demo/src/frontend/money"
+	pb "github.com/Joseph329123/microservices-demo/src/testservice/genproto"
+	"github.com/Joseph329123/microservices-demo/src/testservice/money"
 )
 
 var (
