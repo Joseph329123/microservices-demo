@@ -464,6 +464,44 @@ func (fe *frontendServer) timeCartServiceEmptyCartRequest(ctx context.Context, u
 	return elapsed, resp, err
 } 
 
+/********************************************************************/
+/* AdService */
+/********************************************************************/
+
+// Send 'AdRequest' to AdService, receive 'AdResponse'
+func (fe *frontendServer) timeAdServiceAdRequest(ctx context.Context, ctxKeys []string) (time.Duration, []*pb.Ad, error) {
+	fmt.Println("timeAdServiceAdRequest()")
+
+	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*100)
+	defer cancel()
+
+	adServiceClient := pb.NewAdServiceClient(fe.adSvcConn)
+
+	start := time.Now()	
+	resp, err := adServiceClient.GetAds(ctx, &pb.AdRequest{
+		ContextKeys: ctxKeys,
+	})
+	elapsed := time.Since(start)
+
+	if err != nil {
+		fmt.Println("errors")
+	} else {
+		fmt.Println("no errors")
+	}
+
+	for err != nil {
+		start = time.Now()
+		resp, err = adServiceClient.GetAds(ctx, &pb.AdRequest{
+			ContextKeys: ctxKeys,
+		})		
+		elapsed = time.Since(start)		
+	}
+
+	fmt.Println(elapsed)
+	return elapsed, resp.GetAds(), errors.Wrap(err, "failed to get ads")
+}
+
+
 
 func (fe *frontendServer) getCurrencies(ctx context.Context) ([]string, error) {
 	currs, err := pb.NewCurrencyServiceClient(fe.currencySvcConn).

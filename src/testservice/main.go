@@ -213,6 +213,12 @@ func main() {
 		svc.timeCartServiceEmptyCartRequest(ctx, "dummy")
 	}
 
+	/* AdService */
+	ctxKeys := []string{"camera"}
+	for i := 0; i < 3; i++ {
+		svc.timeAdServiceAdRequest(ctx, ctxKeys)
+	}
+	
 
 	log.Infof("starting server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
