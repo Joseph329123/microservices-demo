@@ -84,6 +84,9 @@ type frontendServer struct {
 
 	paymentSvcAddr string
 	paymentSvcConn *grpc.ClientConn
+
+	emailSvcAddr string
+	emailSvcConn *grpc.ClientConn
 }
 
 func main() {
@@ -117,6 +120,7 @@ func main() {
 	mustMapEnv(&svc.shippingSvcAddr, "SHIPPING_SERVICE_ADDR")
 	mustMapEnv(&svc.adSvcAddr, "AD_SERVICE_ADDR")
 	mustMapEnv(&svc.paymentSvcAddr, "PAYMENT_SERVICE_ADDR")
+	mustMapEnv(&svc.emailSvcAddr, "EMAIL_SERVICE_ADDR")
 
 	mustConnGRPC(ctx, &svc.currencySvcConn, svc.currencySvcAddr)
 	mustConnGRPC(ctx, &svc.productCatalogSvcConn, svc.productCatalogSvcAddr)
@@ -126,6 +130,7 @@ func main() {
 	mustConnGRPC(ctx, &svc.checkoutSvcConn, svc.checkoutSvcAddr)
 	mustConnGRPC(ctx, &svc.adSvcConn, svc.adSvcAddr)
 	mustConnGRPC(ctx, &svc.paymentSvcConn, svc.paymentSvcAddr)
+	mustConnGRPC(ctx, &svc.emailSvcConn, svc.emailSvcAddr)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", svc.homeHandler).Methods(http.MethodGet, http.MethodHead)
@@ -230,8 +235,28 @@ func main() {
 						CreditCardExpirationMonth: 1,
 						CreditCardExpirationYear:  2020,
 						CreditCardCvv:             672}
+	
 	for i := 0; i < 3; i++ {
 		svc.timePaymentServiceChargeRequest(ctx, money, paymentInfo)
+	}
+
+	/* EmailService */
+	email := "someone@example.com"
+
+	orderItemA := &pb.OrderItem{Item: itemA, Cost: money}
+	orderItemB := &pb.OrderItem{Item: itemB, Cost: money}
+
+	orderItems := []*pb.OrderItem{orderItemA, orderItemB}
+
+	orderResult := &pb.OrderResult {
+						OrderId: 			"dummyOrderId",
+						ShippingTrackingId: "dummyShippingTrackingId",
+						ShippingCost: 		money, 
+						ShippingAddress:    address,
+						Items: 				orderItems}
+
+	for i := 0; i < 3; i++ {
+		svc.timeEmailServiceSendOrderConfirmationRequest(ctx, email, orderResult)
 	}
 
 

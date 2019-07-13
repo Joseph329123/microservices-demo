@@ -53,6 +53,8 @@ spec:
             value: "adservice:9555"
           - name: PAYMENT_SERVICE_ADDR
             value: "paymentservice:50051"
+          - name: EMAIL_SERVICE_ADDR
+            value: "emailservice:5000"
           # - name: JAEGER_SERVICE_ADDR
           #   value: "jaeger-collector:14268"
           resources:

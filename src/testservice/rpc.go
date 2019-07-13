@@ -374,7 +374,7 @@ func (fe *frontendServer) timeCurrencyServiceCurrencyConversionRequest(ctx conte
 /* CartService */
 /********************************************************************/
 
-// Send 'AddItemRequest' to CurrencyService, receive 'Empty'
+// Send 'AddItemRequest' to CartService, receive 'Empty'
 func (fe *frontendServer) timeCartServiceAddItemRequest(ctx context.Context, userID, productID string, quantity int32) (time.Duration, *pb.Empty, error) {
 	fmt.Println("timeCartServiceAddItemRequest()")
 
@@ -536,6 +536,40 @@ func (fe *frontendServer) timePaymentServiceChargeRequest(ctx context.Context, a
 	return elapsed, resp.GetTransactionId(), err
 }
 
+/********************************************************************/
+/* EmailService */
+/********************************************************************/
+
+// Send 'SendOrderConfirmationRequest' to EmailService, receive 'Empty'
+func (fe *frontendServer) timeEmailServiceSendOrderConfirmationRequest(ctx context.Context, email string, order *pb.OrderResult) (time.Duration, *pb.Empty, error) {
+	fmt.Println("timeEmailServiceSendOrderConfirmationRequest()")
+
+	emailServiceClient := pb.NewEmailServiceClient(fe.emailSvcConn)
+
+	start := time.Now()	
+	resp, err := emailServiceClient.SendOrderConfirmation(ctx, &pb.SendOrderConfirmationRequest{
+		Email: email,
+		Order: order})
+	elapsed := time.Since(start)
+
+	if err != nil {
+		fmt.Println("errors")
+	} else {
+		fmt.Println("no errors")
+	}
+
+	for err != nil {
+		start = time.Now()
+		resp, err = emailServiceClient.SendOrderConfirmation(ctx, &pb.SendOrderConfirmationRequest{
+			Email: email,
+			Order: order})	
+		elapsed = time.Since(start)		
+	}
+
+	fmt.Println(elapsed)
+
+	return elapsed, resp, err
+}
 
 
 func (fe *frontendServer) getCurrencies(ctx context.Context) ([]string, error) {
