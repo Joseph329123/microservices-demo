@@ -81,6 +81,9 @@ type frontendServer struct {
 
 	adSvcAddr string
 	adSvcConn *grpc.ClientConn
+
+	paymentSvcAddr string
+	paymentSvcConn *grpc.ClientConn
 }
 
 func main() {
@@ -113,6 +116,7 @@ func main() {
 	mustMapEnv(&svc.checkoutSvcAddr, "CHECKOUT_SERVICE_ADDR")
 	mustMapEnv(&svc.shippingSvcAddr, "SHIPPING_SERVICE_ADDR")
 	mustMapEnv(&svc.adSvcAddr, "AD_SERVICE_ADDR")
+	mustMapEnv(&svc.paymentSvcAddr, "PAYMENT_SERVICE_ADDR")
 
 	mustConnGRPC(ctx, &svc.currencySvcConn, svc.currencySvcAddr)
 	mustConnGRPC(ctx, &svc.productCatalogSvcConn, svc.productCatalogSvcAddr)
@@ -121,6 +125,7 @@ func main() {
 	mustConnGRPC(ctx, &svc.shippingSvcConn, svc.shippingSvcAddr)
 	mustConnGRPC(ctx, &svc.checkoutSvcConn, svc.checkoutSvcAddr)
 	mustConnGRPC(ctx, &svc.adSvcConn, svc.adSvcAddr)
+	mustConnGRPC(ctx, &svc.paymentSvcConn, svc.paymentSvcAddr)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", svc.homeHandler).Methods(http.MethodGet, http.MethodHead)
@@ -188,12 +193,12 @@ func main() {
 	}
 
 	/* CurrencyService */
-	money := pb.Money{CurrencyCode: "EUR",
+	money := &pb.Money{CurrencyCode: "EUR",
 		Units: 1,
 		Nanos: 0}
 	to := "USD"
 	for i:= 0; i < 3; i++ {
-		svc.timeCurrencyServiceCurrencyConversionRequest(ctx, &money, to)
+		svc.timeCurrencyServiceCurrencyConversionRequest(ctx, money, to)
 	}
 
 	for i := 0; i < 3; i++ {
@@ -218,7 +223,17 @@ func main() {
 	for i := 0; i < 3; i++ {
 		svc.timeAdServiceAdRequest(ctx, ctxKeys)
 	}
-	
+
+	/* PaymentService */
+	paymentInfo := &pb.CreditCardInfo{
+						CreditCardNumber:          "4432801561520454",
+						CreditCardExpirationMonth: 1,
+						CreditCardExpirationYear:  2020,
+						CreditCardCvv:             672}
+	for i := 0; i < 3; i++ {
+		svc.timePaymentServiceChargeRequest(ctx, money, paymentInfo)
+	}
+
 
 	log.Infof("starting server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))

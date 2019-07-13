@@ -498,7 +498,42 @@ func (fe *frontendServer) timeAdServiceAdRequest(ctx context.Context, ctxKeys []
 	}
 
 	fmt.Println(elapsed)
-	return elapsed, resp.GetAds(), errors.Wrap(err, "failed to get ads")
+	return elapsed, resp.GetAds(), err
+}
+
+/********************************************************************/
+/* PaymentService */
+/********************************************************************/
+
+// Send 'ChargeRequest' to PaymentService, receive 'ChargeResponse'
+func (fe *frontendServer) timePaymentServiceChargeRequest(ctx context.Context, amount *pb.Money, paymentInfo *pb.CreditCardInfo) (time.Duration, string, error) {
+	fmt.Println("timePaymentServiceChargeRequest()")
+
+	paymentServiceClient := pb.NewPaymentServiceClient(fe.paymentSvcConn)
+
+	start := time.Now()	
+	resp, err := paymentServiceClient.Charge(ctx, &pb.ChargeRequest{
+		Amount:     amount,
+		CreditCard: paymentInfo})
+	elapsed := time.Since(start)
+
+	if err != nil {
+		fmt.Println("errors")
+	} else {
+		fmt.Println("no errors")
+	}
+
+	for err != nil {
+		start = time.Now()
+		resp, err = paymentServiceClient.Charge(ctx, &pb.ChargeRequest{
+			Amount:     amount,
+			CreditCard: paymentInfo})	
+		elapsed = time.Since(start)		
+	}
+
+	fmt.Println(elapsed)
+	fmt.Println(resp.GetTransactionId())
+	return elapsed, resp.GetTransactionId(), err
 }
 
 
