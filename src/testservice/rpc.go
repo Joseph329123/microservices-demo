@@ -204,22 +204,22 @@ func (fe *frontendServer) timeCheckoutServicePlaceOrderRequest(ctx context.Conte
 		//fmt.Println("error")
 		start = time.Now()
 		order, err = checkoutServiceClient.
-		PlaceOrder(ctx, &pb.PlaceOrderRequest{
-			Email: "someone@example.com",
-			CreditCard: &pb.CreditCardInfo{
-				CreditCardNumber:          "4432801561520454",
-				CreditCardExpirationMonth: 1,
-				CreditCardExpirationYear:  2020,
-				CreditCardCvv:             672},
-			UserId:       "dummy",
-			UserCurrency: "USD",
-			Address: &pb.Address{
-				StreetAddress: "1600 Amphitheatre Parkway",
-				City:          "Mountain View",
-				State:         "CA",
-				ZipCode:       94043,
-				Country:       "Mountain View"},
-		})
+			PlaceOrder(ctx, &pb.PlaceOrderRequest{
+				Email: "someone@example.com",
+				CreditCard: &pb.CreditCardInfo{
+					CreditCardNumber:          "4432801561520454",
+					CreditCardExpirationMonth: 1,
+					CreditCardExpirationYear:  2020,
+					CreditCardCvv:             672},
+				UserId:       "dummy",
+				UserCurrency: "USD",
+				Address: &pb.Address{
+					StreetAddress: "1600 Amphitheatre Parkway",
+					City:          "Mountain View",
+					State:         "CA",
+					ZipCode:       94043,
+					Country:       "Mountain View"},
+			})
 		elapsed = time.Since(start)
 	}
 
@@ -369,6 +369,47 @@ func (fe *frontendServer) timeCurrencyServiceCurrencyConversionRequest(ctx conte
 	fmt.Println("elapsed:", elapsed)
 	return elapsed, resp, err
 }
+
+/********************************************************************/
+/* CartService */
+/********************************************************************/
+
+// Send 'AddItemRequest' to CurrencyService, receive 'Empty'
+func (fe *frontendServer) timeCartServiceAddItemRequest(ctx context.Context, userID, productID string, quantity int32) (time.Duration, *pb.Empty, error) {
+	fmt.Println("timeCartServiceAddItemRequest()")
+
+	cartServiceClient := pb.NewCartServiceClient(fe.cartSvcConn)
+
+	start := time.Now()
+	resp, err := cartServiceClient.AddItem(ctx, &pb.AddItemRequest{
+		UserId: userID,
+		Item: &pb.CartItem{
+			ProductId: productID,
+			Quantity:  quantity},
+	})
+	elapsed := time.Since(start)
+
+	if err != nil {
+		fmt.Println("errors")
+	} else {
+		fmt.Println("no errors")
+	}
+
+	for err != nil {
+		start = time.Now()
+		resp, err = cartServiceClient.AddItem(ctx, &pb.AddItemRequest{
+			UserId: userID,
+			Item: &pb.CartItem{
+				ProductId: productID,
+				Quantity:  quantity},
+		})
+		elapsed = time.Since(start)		
+	}
+
+	fmt.Println(elapsed)
+	return elapsed, resp, err
+} 
+
 
 func (fe *frontendServer) getCurrencies(ctx context.Context) ([]string, error) {
 	currs, err := pb.NewCurrencyServiceClient(fe.currencySvcConn).
