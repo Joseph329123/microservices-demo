@@ -205,6 +205,14 @@ func main() {
 		svc.timeCartServiceAddItemRequest(ctx, "dummy", "OLJCESPC7Z", 1)
 	}
 
+	for i := 0; i < 3; i++ {
+		svc.timeCartServiceGetCartRequest(ctx, "dummy")
+	}
+
+	for i := 0; i < 3; i++ {
+		svc.timeCartServiceEmptyCartRequest(ctx, "dummy")
+	}
+
 
 	log.Infof("starting server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))

@@ -410,6 +410,60 @@ func (fe *frontendServer) timeCartServiceAddItemRequest(ctx context.Context, use
 	return elapsed, resp, err
 } 
 
+// Send 'GetCartRequest' to CartService, receive 'Cart'
+func (fe *frontendServer) timeCartServiceGetCartRequest(ctx context.Context, userID string) (time.Duration, []*pb.CartItem, error) {
+	fmt.Println("timeCartServiceGetCartRequest()")
+
+	cartServiceClient := pb.NewCartServiceClient(fe.cartSvcConn)
+	
+	start := time.Now()
+	resp, err := cartServiceClient.GetCart(ctx, &pb.GetCartRequest{UserId: userID})
+	elapsed := time.Since(start)
+
+	if err != nil {
+		fmt.Println("errors")
+	} else {
+		fmt.Println("no errors")
+	}
+
+	for err != nil {
+		start = time.Now()
+		resp, err = cartServiceClient.GetCart(ctx, &pb.GetCartRequest{UserId: userID})
+		elapsed = time.Since(start)		
+	}
+
+	fmt.Println(elapsed)
+	fmt.Println((resp.GetItems())[0].GetProductId())
+
+	return elapsed, resp.GetItems(), err
+} 
+
+// Send 'EmptyCartRequest' to CartService, receive 'Empty'
+func (fe *frontendServer) timeCartServiceEmptyCartRequest(ctx context.Context, userID string) (time.Duration, *pb.Empty, error) {
+	fmt.Println("timeCartServiceEmptyCartRequest()")
+
+	cartServiceClient := pb.NewCartServiceClient(fe.cartSvcConn)
+
+	start := time.Now()	
+	resp, err := cartServiceClient.EmptyCart(ctx, &pb.EmptyCartRequest{UserId: userID})
+	elapsed := time.Since(start)
+
+	if err != nil {
+		fmt.Println("errors")
+	} else {
+		fmt.Println("no errors")
+	}
+
+	for err != nil {
+		start = time.Now()
+		resp, err = cartServiceClient.EmptyCart(ctx, &pb.EmptyCartRequest{UserId: userID})
+		elapsed = time.Since(start)		
+	}
+
+	fmt.Println(elapsed)
+	return elapsed, resp, err
+} 
+
 
 func (fe *frontendServer) getCurrencies(ctx context.Context) ([]string, error) {
 	currs, err := pb.NewCurrencyServiceClient(fe.currencySvcConn).
