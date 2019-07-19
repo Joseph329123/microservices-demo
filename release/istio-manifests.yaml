@@ -17,6 +17,20 @@
 # ----------------------------------------------------------
 
 apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: testservice
+spec:
+  hosts:
+  - "testservice.default.svc.cluster.local"
+  http:
+  - route:
+    - destination:
+        host: testservice
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: frontend-gateway
@@ -44,6 +58,37 @@ spec:
   - route:
     - destination:
         host: frontend
+        port:
+          number: 80
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: testservice-gateway
+spec:
+  selector:
+    istio: ingressgateway # use Istio default gateway implementation
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: testservice-ingress
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - testservice-gateway
+  http:
+  - route:
+    - destination:
+        host: testservice
         port:
           number: 80
 ---
