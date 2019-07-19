@@ -100,8 +100,9 @@ func main() {
 		TimestampFormat: time.RFC3339Nano,
 	}
 	log.Out = ioutil.Discard
+	//log.Out = os.Stdout
 
-	go initProfiling(log, "frontend", "1.0.0")
+	go initProfiling(log, "testservice", "1.0.0")
 	go initTracing(log)
 
 	srvPort := port
@@ -151,7 +152,7 @@ func main() {
 		Propagation: &b3.HTTPFormat{}}
 
 	/* Run Response Time Tests */
-	runResponseTimeTests(ctx, svc, 1000)
+	runResponseTimeTests(ctx, svc, 100)
 
 	log.Infof("starting server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
