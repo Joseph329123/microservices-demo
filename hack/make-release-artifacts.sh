@@ -23,9 +23,13 @@ SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 log() { echo "$1" >&2; }
 
-TAG="${TAG:?TAG env variable must be specified}"
-REPO_PREFIX="${REPO_PREFIX:?REPO_PREFIX env variable must be specified}"
+# TAG="${TAG:?TAG env variable must be specified}"
+# REPO_PREFIX="${REPO_PREFIX:?REPO_PREFIX env variable must be specified}"
+TAG="v0.1.1"
+REPO_PREFIX="microservices-demo"
 OUT_DIR="${OUT_DIR:-${SCRIPTDIR}/../release}"
+
+
 
 print_license_header() {
     cat "${SCRIPTDIR}/license_header.txt"
@@ -64,7 +68,7 @@ mk_kubernetes_manifests() {
     out_manifest="$(read_manifests "${SCRIPTDIR}/../kubernetes-manifests")"
 
     # replace "image" repo, tag for each service
-    for dir in ./src/*/
+    for dir in ../src/*/
     do
         svcname="$(basename "${dir}")"
         image="$REPO_PREFIX/$svcname:$TAG"
