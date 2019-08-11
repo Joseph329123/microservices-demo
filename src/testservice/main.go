@@ -34,6 +34,8 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc"
+
+	//pb "github.com/Joseph329123/microservices-demo/src/testservice/genproto"
 )
 
 const (
@@ -152,7 +154,7 @@ func main() {
 		Propagation: &b3.HTTPFormat{}}
 
 	/* Run Response Time Tests */
-	runResponseTimeTests(ctx, svc, 100)
+	runResponseTimeTests(ctx, svc, 1)
 
 	log.Infof("starting server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))
