@@ -34,17 +34,18 @@ spec:
         env:
         - name: PORT
           value: "8080"
-        # readinessProbe:
-        #   periodSeconds: 5
-        #   exec:
-        #     command: ["/bin/grpc_health_probe", "-addr=:8080"]
-        # livenessProbe:
-        #   periodSeconds: 5
-        #   exec:
-        #     command: ["/bin/grpc_health_probe", "-addr=:8080"]
-        env:
         - name: ENABLE_PROFILER
           value: "0"
+        - name: EXTRA_LATENCY
+          value: "1"
+        readinessProbe:
+          periodSeconds: 5
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:8080"]
+        livenessProbe:
+          periodSeconds: 5
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:8080"]
         resources:
           requests:
             cpu: 100m

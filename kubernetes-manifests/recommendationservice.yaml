@@ -31,14 +31,14 @@ spec:
         image: recommendationservice
         ports:
         - containerPort: 8080
-        # readinessProbe:
-        #   periodSeconds: 5
-        #   exec:
-        #     command: ["/bin/grpc_health_probe", "-addr=:8080"]
-        # livenessProbe:
-        #   periodSeconds: 5
-        #   exec:
-        #     command: ["/bin/grpc_health_probe", "-addr=:8080"]
+        readinessProbe:
+          periodSeconds: 5
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:8080"]
+        livenessProbe:
+          periodSeconds: 5
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:8080"]
         env:
         - name: PORT
           value: "8080"
@@ -46,6 +46,8 @@ spec:
           value: "productcatalogservice:3550"
         - name: ENABLE_PROFILER
           value: "0"
+        - name: EXTRA_LATENCY
+          value: "1"
         resources:
           requests:
             cpu: 100m

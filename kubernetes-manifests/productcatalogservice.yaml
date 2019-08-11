@@ -34,12 +34,14 @@ spec:
         env:
         - name: PORT
           value: "3550"
-        # readinessProbe:
-        #   exec:
-        #     command: ["/bin/grpc_health_probe", "-addr=:3550"]
-        # livenessProbe:
-        #   exec:
-        #     command: ["/bin/grpc_health_probe", "-addr=:3550"]
+        - name: EXTRA_LATENCY
+          value: "1s"
+        readinessProbe:
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:3550"]
+        livenessProbe:
+          exec:
+            command: ["/bin/grpc_health_probe", "-addr=:3550"]
 #        env:
 #          - name: JAEGER_SERVICE_ADDR
 #            value: "jaeger-collector:14268"

@@ -15,51 +15,43 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: currencyservice
+  name: loadgenerator
 spec:
   selector:
     matchLabels:
-      app: currencyservice
+      app: loadgenerator
+  replicas: 1
   template:
     metadata:
       labels:
-        app: currencyservice
+        app: loadgenerator
     spec:
       terminationGracePeriodSeconds: 5
-      containers:
-      - name: server
-        image: currencyservice
-        ports:
-        - name: grpc
-          containerPort: 7000
+      restartPolicy: Always
+      initContainers:
+      - name: wait-frontend
+        image: alpine:3.6
+        command: ['sh', '-c', 'set -x;  apk add --no-cache curl &&
+          until $(curl --output /dev/null --silent --head --fail "http://${FRONTEND_ADDR}"); do
+            echo "waiting for http://${FRONTEND_ADDR}";
+            echo ${FRONTEND_ADDR}
+            sleep 2;
+          done;']
         env:
-        - name: PORT
-          value: "7000"
-        - name: EXTRA_LATENCY
-          value: "1"
-        readinessProbe:
-          exec:
-            command: ["/bin/grpc_health_probe", "-addr=:7000"]
-        livenessProbe:
-          exec:
-            command: ["/bin/grpc_health_probe", "-addr=:7000"]
+        - name: FRONTEND_ADDR
+          value: "frontend:80"
+      containers:
+      - name: main
+        image: loadgenerator
+        env:
+        - name: FRONTEND_ADDR
+          value: "frontend:80"
+        - name: USERS
+          value: "10"
         resources:
           requests:
-            cpu: 100m
-            memory: 64Mi
+            cpu: 300m
+            memory: 256Mi
           limits:
-            cpu: 200m
-            memory: 128Mi
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: currencyservice
-spec:
-  type: ClusterIP
-  selector:
-    app: currencyservice
-  ports:
-  - name: grpc
-    port: 7000
-    targetPort: 7000
+            cpu: 500m
+            memory: 512Mi
