@@ -60,6 +60,8 @@ public final class AdService {
 
   private static final AdService service = new AdService();
 
+  private static int extraLatency = (int) (1000 * Double.parseDouble(System.getenv("EXTRA_LATENCY")));
+
   private void start() throws IOException {
     int port = Integer.parseInt(System.getenv("PORT"));
     healthMgr = new HealthStatusManager();
@@ -103,6 +105,11 @@ public final class AdService {
      */
     @Override
     public void getAds(AdRequest req, StreamObserver<AdResponse> responseObserver) {
+      try {
+        Thread.sleep(AdService.extraLatency);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
       AdService service = AdService.getInstance();
       Span span = tracer.getCurrentSpan();
       try {

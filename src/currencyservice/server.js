@@ -37,6 +37,7 @@ const MAIN_PROTO_PATH = path.join(__dirname, './proto/demo.proto');
 const HEALTH_PROTO_PATH = path.join(__dirname, './proto/grpc/health/v1/health.proto');
 
 const PORT = process.env.PORT;
+const EXTRA_LATENCY = 1000 * parseFloat(process.env.EXTRA_LATENCY);
 
 const shopProto = _loadProto(MAIN_PROTO_PATH).hipstershop;
 const healthProto = _loadProto(HEALTH_PROTO_PATH).grpc.health.v1;
@@ -47,6 +48,13 @@ const logger = pino({
   changeLevelName: 'severity',
   useLevelLabels: true
 });
+
+/**
+ * Helper function that allows us to inject latency
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /**
  * Helper function that loads a protobuf file.
@@ -89,6 +97,8 @@ function _carry (amount) {
  * Lists the supported currencies
  */
 function getSupportedCurrencies (call, callback) {
+  await sleep(EXTRA_LATENCY);
+
   logger.info('Getting supported currencies...');
   _getCurrencyData((data) => {
     callback(null, {currency_codes: Object.keys(data)});
@@ -99,6 +109,8 @@ function getSupportedCurrencies (call, callback) {
  * Converts between currencies
  */
 function convert (call, callback) {
+  await sleep(EXTRA_LATENCY);
+  
   logger.info('received conversion request');
   try {
     _getCurrencyData((data) => {

@@ -36,6 +36,9 @@ from grpc_health.v1 import health_pb2_grpc
 from logger import getJSONLogger
 logger = getJSONLogger('recommendationservice-server')
 
+# set injected latency
+extraLatency = float(os.environ.get('EXTRA_LATENCY'))
+
 def initStackdriverProfiling():
   project_id = None
   try:
@@ -63,6 +66,8 @@ def initStackdriverProfiling():
 
 class RecommendationService(demo_pb2_grpc.RecommendationServiceServicer):
     def ListRecommendations(self, request, context):
+        time.sleep(extraLatency)
+        
         max_responses = 5
         # fetch list of products from product catalog stub
         cat_response = product_catalog_stub.ListProducts(demo_pb2.Empty())

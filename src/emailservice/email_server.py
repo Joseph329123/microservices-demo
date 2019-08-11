@@ -50,6 +50,9 @@ except:
 # except:
 #     pass
 
+# set injected latency
+extraLatency = float(os.environ.get('EXTRA_LATENCY'))
+
 from logger import getJSONLogger
 logger = getJSONLogger('emailservice-server')
 
@@ -114,6 +117,8 @@ class EmailService(BaseEmailService):
 
 class DummyEmailService(BaseEmailService):
   def SendOrderConfirmation(self, request, context):
+    time.sleep(extraLatency)
+    
     logger.info('A request to send order confirmation email to {} has been received.'.format(request.email))
     return demo_pb2.Empty()
 

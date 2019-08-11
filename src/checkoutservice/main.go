@@ -43,7 +43,10 @@ const (
 	usdCurrency = "USD"
 )
 
-var log *logrus.Logger
+var (
+	log *logrus.Logger
+	extraLatency time.Duration
+)
 
 func init() {
 	log = logrus.New()
@@ -71,6 +74,18 @@ type checkoutService struct {
 func main() {
 	go initTracing()
 	go initProfiling("checkoutservice", "1.0.0")
+
+	// set injected latency
+	if s := os.Getenv("EXTRA_LATENCY"); s != "" {
+		v, err := time.ParseDuration(s)
+		if err != nil {
+			log.Fatalf("failed to parse EXTRA_LATENCY (%s) as time.Duration: %+v", v, err)
+		}
+		extraLatency = v
+		log.Infof("extra latency enabled (duration: %v)", extraLatency)
+	} else {
+		extraLatency = time.Duration(0)
+	}
 
 	port := listenPort
 	if os.Getenv("PORT") != "" {
@@ -197,6 +212,7 @@ func (cs *checkoutService) Watch(req *healthpb.HealthCheckRequest, ws healthpb.H
 }
 
 func (cs *checkoutService) PlaceOrder(ctx context.Context, req *pb.PlaceOrderRequest) (*pb.PlaceOrderResponse, error) {
+	time.Sleep(extraLatency)
 	log.Infof("[PlaceOrder] user_id=%q user_currency=%q", req.UserId, req.UserCurrency)
 
 	orderID, err := uuid.NewUUID()

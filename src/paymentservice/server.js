@@ -18,6 +18,7 @@ const pino = require('pino');
 const protoLoader = require('@grpc/proto-loader');
 
 const charge = require('./charge');
+const EXTRA_LATENCY = 1000 * parseFloat(process.env.EXTRA_LATENCY);
 
 const logger = pino({
   name: 'paymentservice-server',
@@ -25,6 +26,13 @@ const logger = pino({
   changeLevelName: 'severity',
   useLevelLabels: true
 });
+
+/**
+ * Helper function that allows us to inject latency
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 class HipsterShopServer {
   constructor (protoRoot, port = HipsterShopServer.PORT) {
@@ -45,6 +53,8 @@ class HipsterShopServer {
    * @param {*} callback  fn(err, ChargeResponse)
    */
   static ChargeServiceHandler (call, callback) {
+    await sleep(EXTRA_LATENCY);
+    
     try {
       logger.info(`PaymentService#Charge invoked with request ${JSON.stringify(call.request)}`);
       const response = charge(call.request);

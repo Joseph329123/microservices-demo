@@ -39,6 +39,8 @@ namespace cartservice.cartstore
 
         private readonly ConfigurationOptions redisConnectionOptions;
 
+        int extraLatency = (int) (1000 * Convert.ToDouble(Environment.GetEnvironmentVariable("EXTRA_LATENCY")));
+
         public RedisCartStore(string redisAddress)
         {
             // Serialize empty cart into byte array.
@@ -113,6 +115,7 @@ namespace cartservice.cartstore
 
         public async Task AddItemAsync(string userId, string productId, int quantity)
         {
+            await Task.Delay(extraLatency);
             Console.WriteLine($"AddItemAsync called with userId={userId}, productId={productId}, quantity={quantity}");
 
             try
@@ -155,6 +158,7 @@ namespace cartservice.cartstore
 
         public async Task EmptyCartAsync(string userId)
         {
+            await Task.Delay(extraLatency);
             Console.WriteLine($"EmptyCartAsync called with userId={userId}");
 
             try
@@ -173,6 +177,7 @@ namespace cartservice.cartstore
 
         public async Task<Hipstershop.Cart> GetCartAsync(string userId)
         {
+            await Task.Delay(extraLatency);
             Console.WriteLine($"GetCartAsync called with userId={userId}");
 
             try
