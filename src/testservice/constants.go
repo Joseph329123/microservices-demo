@@ -6,15 +6,15 @@ import (
 
 const (
 
-	// total # of requests sent between microservices
-	NUMBER_OF_REQUESTS = 15
 
-	// 0: best response time, 1: worst response time, 2: mean response time, 3: std deviation
 	BEST_RESPONSE_TIME_INDEX = 0
 	WORST_RESPONSE_TIME_INDEX = 1
 	MEAN_RESPONSE_TIME_INDEX = 2
 	STD_DEV_INDEX = 3
 
+
+	// total # of requests sent between microservices
+	NUMBER_OF_REQUESTS = 15
 
 	PRODUCT_CATALOGUE_EMPTY_REQUEST = "Product Catalogue Service: Empty Request"
 	PRODUCT_CATALOGUE_GET_PRODUCT_REQUEST = "Prouduct Catalogue Service: Get Product Request"
@@ -102,7 +102,7 @@ var (
 )
 
 var (
-	CTX_KEYS = []string{"camera"}
+	CTX_KEYS = []string{"cookware"}
 )
 
 var (
