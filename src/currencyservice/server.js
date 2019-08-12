@@ -96,7 +96,7 @@ function _carry (amount) {
 /**
  * Lists the supported currencies
  */
-function getSupportedCurrencies (call, callback) {
+async function getSupportedCurrencies (call, callback) {
   await sleep(EXTRA_LATENCY);
 
   logger.info('Getting supported currencies...');
@@ -108,7 +108,7 @@ function getSupportedCurrencies (call, callback) {
 /**
  * Converts between currencies
  */
-function convert (call, callback) {
+async function convert (call, callback) {
   await sleep(EXTRA_LATENCY);
   
   logger.info('received conversion request');

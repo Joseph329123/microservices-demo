@@ -52,7 +52,7 @@ class HipsterShopServer {
    * @param {*} call  { ChargeRequest }
    * @param {*} callback  fn(err, ChargeResponse)
    */
-  static ChargeServiceHandler (call, callback) {
+  async static ChargeServiceHandler (call, callback) {
     await sleep(EXTRA_LATENCY);
     
     try {
