@@ -154,7 +154,7 @@ func main() {
 		Propagation: &b3.HTTPFormat{}}
 
 	/* Run Response Time Tests */
-	runResponseTimeTests(ctx, svc, 1)
+	runResponseTimeTests(ctx, svc, 10)
 
 	log.Infof("starting server on " + addr + ":" + srvPort)
 	log.Fatal(http.ListenAndServe(addr+":"+srvPort, handler))

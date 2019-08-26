@@ -1,3 +1,7 @@
+// This file sends requests to all services and requests
+// and measures performance and availability, it then writes these
+// results to a csv file
+
 package main
 
 import (
@@ -22,13 +26,27 @@ func runResponseTimeTests(ctx context.Context, svc *frontendServer, samples int)
 		data_availability[i] = make([]error, samples)
 	}
 
+	// we want the checkout service to receive configured results from the
+	// cart service and shipping service (for example,
+	// the first cart request the
+	// checkoutService sends to the cart service should result in a cart
+	// response that contains an item with a nonexistent product ID)
+	// this dummy call to checkout service accomplishes this
+	if s := os.Getenv("CART_RESPONSE"); (s == "exception") || (s == "bad product id") {
+		svc.timeCheckoutServicePlaceOrderRequest(ctx)
+	}
+
+	if s := os.Getenv("GET_QUOTE_RESPONSE"); s == "error" {
+		svc.timeCheckoutServicePlaceOrderRequest(ctx)
+	}
+
 	for i := 0; i < samples; i++ {
 		fmt.Println(i)
 		/* ProductCatalogueService */
 		data_response_times[PRODUCT_CATALOGUE_EMPTY_REQUEST_INDEX][i], _, data_availability[PRODUCT_CATALOGUE_EMPTY_REQUEST_INDEX][i] = svc.timeProductCatalogueServiceEmptyRequest(ctx)
 
 		data_response_times[PRODUCT_CATALOGUE_GET_PRODUCT_REQUEST_INDEX][i], _, data_availability[PRODUCT_CATALOGUE_GET_PRODUCT_REQUEST_INDEX][i] = svc.timeProductCatalogueServiceGetProductRequest(ctx, VINTAGE_TYPEWRITER_ID)
-		
+
 		data_response_times[PRODUCT_CATALOGUE_SEARCH_PRODUCT_REQUEST_INDEX][i], _, data_availability[PRODUCT_CATALOGUE_SEARCH_PRODUCT_REQUEST_INDEX][i] = svc.timeProductCatalogueServiceSearchProductsRequest(ctx, VINTAGE_TYPEWRITER)
 
 		/* RecommendationService */
@@ -37,40 +55,41 @@ func runResponseTimeTests(ctx context.Context, svc *frontendServer, samples int)
 		/* CheckoutService */
 		data_response_times[CHECKOUT_PLACE_ORDER_REQUEST_INDEX][i], _, data_availability[CHECKOUT_PLACE_ORDER_REQUEST_INDEX][i] = svc.timeCheckoutServicePlaceOrderRequest(ctx)
 
-		/* ShippingService */ 
+		/* ShippingService */
 		data_response_times[SHIPPING_GET_QUOTE_REQUEST_INDEX][i], _, data_availability[SHIPPING_GET_QUOTE_REQUEST_INDEX][i] = svc.timeShippingServiceGetQuoteRequest(ctx, ITEMS, USD)
 
 		data_response_times[SHIPPING_SHIP_ORDER_REQUEST_INDEX][i], _, data_availability[SHIPPING_SHIP_ORDER_REQUEST_INDEX][i] = svc.timeShippingServiceShipOrderRequest(ctx, ADDRESS, ITEMS)
-	
+
 		/* CurrencyService */
 		data_response_times[CURRENCY_CURRENCY_CONVERSION_REQUEST_INDEX][i], _, data_availability[CURRENCY_CURRENCY_CONVERSION_REQUEST_INDEX][i] = svc.timeCurrencyServiceCurrencyConversionRequest(ctx, MONEY, USD)
-		
+
 		data_response_times[CURRENCY_EMPTY_REQUEST_INDEX][i], _, data_availability[CURRENCY_EMPTY_REQUEST_INDEX][i] = svc.timeCurrencyServiceEmptyRequest(ctx)
 
 		/* CartService */
 		data_response_times[CART_ADD_ITEM_REQUEST_INDEX][i], _, data_availability[CART_ADD_ITEM_REQUEST_INDEX][i] = svc.timeCartServiceAddItemRequest(ctx, USER_ID, VINTAGE_TYPEWRITER_ID, 1)
-	
+
 		data_response_times[CART_GET_CART_REQUEST_INDEX][i], _, data_availability[CART_GET_CART_REQUEST_INDEX][i] = svc.timeCartServiceGetCartRequest(ctx, USER_ID)
-		
+
 		data_response_times[CART_EMPTY_CART_REQUEST_INDEX][i], _, data_availability[CART_EMPTY_CART_REQUEST_INDEX][i] = svc.timeCartServiceEmptyCartRequest(ctx, USER_ID)
-		
+
 		/* AdService */
 		data_response_times[AD_AD_REQUEST_INDEX][i], _, data_availability[AD_AD_REQUEST_INDEX][i] = svc.timeAdServiceAdRequest(ctx, CTX_KEYS)
 
 		/* PaymentService */
 		data_response_times[PAYMENT_CHARGE_REQUEST_INDEX][i], _, data_availability[PAYMENT_CHARGE_REQUEST_INDEX][i] = svc.timePaymentServiceChargeRequest(ctx, MONEY, CREDITCARDINFO)
 
-		/* EmailService */ 
+		/* EmailService */
 		data_response_times[EMAIL_SEND_ORDER_CONFIRMATION_REQUEST_INDEX][i], _, data_availability[EMAIL_SEND_ORDER_CONFIRMATION_REQUEST_INDEX][i] = svc.timeEmailServiceSendOrderConfirmationRequest(ctx, EMAIL, ORDER_RESULT)
 	}
 
 	data_response_times_summary := getResponseTimeSummary(data_response_times)
 	data_availability_summary := getAvailabilitySummary(data_availability, samples)
 	writeToCSV(data_response_times_summary, data_availability_summary)
+	fmt.Println("done")
 }
 
 func writeToCSV(data_response_times_summary[][] float64, data_availability_summary[] float64) {
-	f, err := os.Create("out.csv")
+	f, err := os.Create("results_unformatted.csv")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -84,7 +103,7 @@ func writeToCSV(data_response_times_summary[][] float64, data_availability_summa
 			f.Close()
 			return
 		}
-		
+
 		// writing performance stats
 		for _, j := range i {
 			_, err = f.WriteString(fmt.Sprint(j) + ",")
@@ -97,7 +116,7 @@ func writeToCSV(data_response_times_summary[][] float64, data_availability_summa
 
 		// writing availability stats
 		_, err = f.WriteString(fmt.Sprint(data_availability_summary[k]) + "\n")
-		
+
 		if err != nil {
 			fmt.Println(err)
 			f.Close()
@@ -115,7 +134,7 @@ func writeToCSV(data_response_times_summary[][] float64, data_availability_summa
 
 func getResponseTimeSummary(data[][] float64) ([][] float64) {
 	data_response_times_summary := make([][]float64, NUMBER_OF_REQUESTS)
-	
+
 	for i := 0; i < NUMBER_OF_REQUESTS; i++ {
 		data_response_times_summary[i] = make([]float64, 4)
 		data_response_times_summary[i][BEST_RESPONSE_TIME_INDEX] = find_min(data[i])
@@ -137,8 +156,6 @@ func getAvailabilitySummary(data[][] error, samples int) ([] float64) {
 				availabilityCount += 1
 			}
 		}
-		fmt.Println("availabilityCount", availabilityCount)
-		fmt.Println(float64(availabilityCount)/float64(samples))
 		data_availability_summary[i] = float64(availabilityCount)/float64(samples)
 	}
 
@@ -157,14 +174,6 @@ func (fe *frontendServer) timeProductCatalogueServiceEmptyRequest(ctx context.Co
 	resp, err := productCatalogServiceClient.ListProducts(ctx, &pb.Empty{})
 	elapsed := time.Since(start)
 
-	// for err != nil {
-	// 	fmt.Println("error: timeProductCatalogueServiceEmptyRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = productCatalogServiceClient.ListProducts(ctx, &pb.Empty{})
-	// 	elapsed = time.Since(start)
-	// }
-
 	return elapsed.Seconds(), resp.GetProducts(), err
 }
 
@@ -176,32 +185,16 @@ func (fe *frontendServer) timeProductCatalogueServiceGetProductRequest(ctx conte
 	resp, err := productCatalogServiceClient.GetProduct(ctx, &pb.GetProductRequest{Id: id})
 	elapsed := time.Since(start)
 
-	// for err != nil {
-	// 	fmt.Println("error: timeProductCatalogueServiceGetProductRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = productCatalogServiceClient.GetProduct(ctx, &pb.GetProductRequest{Id: id})
-	// 	elapsed = time.Since(start)
-	// }
-
 	return elapsed.Seconds(), resp, err
 }
 
 /* Send 'SearchProductsRequest' to ProductCatalogueService, receive 'SearchProductsResponse' */
 func (fe *frontendServer) timeProductCatalogueServiceSearchProductsRequest(ctx context.Context, query string) (float64, *pb.SearchProductsResponse, error) {
-	productCatalogServiceClient := pb.NewProductCatalogServiceClient(fe.productCatalogSvcConn)	
+	productCatalogServiceClient := pb.NewProductCatalogServiceClient(fe.productCatalogSvcConn)
 
 	start := time.Now()
 	resp, err := productCatalogServiceClient.SearchProducts(ctx, &pb.SearchProductsRequest{Query: query})
 	elapsed := time.Since(start)
-
-	// for err != nil {
-	// 	fmt.Println("error: timeProductCatalogueServiceSearchProductsRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = productCatalogServiceClient.SearchProducts(ctx, &pb.SearchProductsRequest{Query: query})
-	// 	elapsed = time.Since(start)
-	// }
 
 	return elapsed.Seconds(), resp, err
 }
@@ -215,19 +208,10 @@ func (fe *frontendServer) timeRecommendationServiceListRecommendationsRequest(ct
 	recommendationServiceClient := pb.NewRecommendationServiceClient(fe.recommendationSvcConn)
 
 	start := time.Now()
-	resp, err := recommendationServiceClient.ListRecommendations(ctx, 
+	resp, err := recommendationServiceClient.ListRecommendations(ctx,
 		&pb.ListRecommendationsRequest{UserId: userID, ProductIds: productIDs})
 	elapsed := time.Since(start)
 
-	// for err != nil {
-	// 	fmt.Println("error: timeRecommendationServiceListRecommendationsRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = recommendationServiceClient.ListRecommendations(ctx, 
-	// 		&pb.ListRecommendationsRequest{UserId: userID, ProductIds: productIDs})	
-	// 	elapsed = time.Since(start)
-	// }
-	
 	out := make([]*pb.Product, len(resp.GetProductIds()))
 	for i, v := range resp.GetProductIds() {
 		p, err := fe.getProduct(ctx, v)
@@ -251,33 +235,35 @@ func (fe *frontendServer) timeRecommendationServiceListRecommendationsRequest(ct
 func (fe *frontendServer) timeCheckoutServicePlaceOrderRequest(ctx context.Context) (float64, *pb.PlaceOrderResponse, error) {
 	checkoutServiceClient := pb.NewCheckoutServiceClient(fe.checkoutSvcConn)
 
+	// first add some items to cart
+	cartServiceClient := pb.NewCartServiceClient(fe.cartSvcConn)
+
+	cartServiceClient.AddItem(ctx, &pb.AddItemRequest{
+		UserId: "dummyIDcheckout",
+		Item: &pb.CartItem{
+			ProductId: "OLJCESPC7Z",
+			Quantity:  10},
+	})
+
+	checkout_address := &pb.Address{
+					StreetAddress: "1600 Amphitheatre Parkway",
+					City:          "checkout",
+					State:         "CA",
+					ZipCode:       94043,
+					Country:       "Mountain View"}
+
 	start := time.Now()
 	order, err := checkoutServiceClient.
 		PlaceOrder(ctx, &pb.PlaceOrderRequest{
 			Email: EMAIL,
 			CreditCard: CREDITCARDINFO,
-			UserId: USER_ID,
+			UserId: "dummyIDcheckout",
 			UserCurrency: USD,
-			Address: ADDRESS,
-		})	
+			Address: checkout_address,
+		})
 	elapsed := time.Since(start)
 
-	// for err != nil {
-	// 	fmt.Println("error: timeCheckoutServicePlaceOrderRequest:", err)
-		
-	// 	start = time.Now()
-	// 	order, err = checkoutServiceClient.
-	// 		PlaceOrder(ctx, &pb.PlaceOrderRequest{
-	// 			Email: EMAIL,
-	// 			CreditCard: CREDITCARDINFO,
-	// 			UserId: USER_ID,
-	// 			UserCurrency: USD,
-	// 			Address: ADDRESS,
-	// 		})
-	// 	elapsed = time.Since(start)
-	// }
-	
-	return elapsed.Seconds(), order, err 
+	return elapsed.Seconds(), order, err
 }
 
 /********************************************************************/
@@ -291,20 +277,9 @@ func (fe *frontendServer) timeShippingServiceGetQuoteRequest(ctx context.Context
 	start := time.Now()
 	quote, err := shippingServiceClient.GetQuote(ctx,
 		&pb.GetQuoteRequest{
-			Address: nil,
+			Address: ADDRESS,
 			Items:   items})
 	elapsed := time.Since(start)
-
-	// for err != nil {
-	// 	fmt.Println("error: timeShippingServiceGetQuoteRequest:", err)
-		
-	// 	start = time.Now()
-	// 	quote, err = shippingServiceClient.GetQuote(ctx,
-	// 		&pb.GetQuoteRequest{
-	// 			Address: nil,
-	// 			Items:   items})
-	// 	elapsed = time.Since(start)
-	// }
 
 	localized, err := fe.convertCurrency(ctx, quote.GetCostUsd(), currency)
 
@@ -320,16 +295,6 @@ func (fe *frontendServer) timeShippingServiceShipOrderRequest(ctx context.Contex
 		Address: address,
 		Items:   items})
 	elapsed := time.Since(start)
-
-	// for err != nil {
-	// 	fmt.Println("error: timeShippingServiceShipOrderRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = shippingServiceClient.ShipOrder(ctx, &pb.ShipOrderRequest{
-	// 		Address: address,
-	// 		Items:   items})
-	// 	elapsed = time.Since(start)
-	// }
 
 	return elapsed.Seconds(), resp.GetTrackingId(), err
 }
@@ -347,22 +312,13 @@ func (fe *frontendServer) timeCurrencyServiceEmptyRequest(ctx context.Context) (
 		GetSupportedCurrencies(ctx, &pb.Empty{})
 	elapsed := time.Since(start)
 
-	// for err != nil {
-	// 	fmt.Println("error: timeCurrencyServiceEmptyRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = currencyServiceClient.
-	// 		GetSupportedCurrencies(ctx, &pb.Empty{})
-	// 	elapsed = time.Since(start)
-	// }
-
 	var out []string
 	for _, c := range resp.CurrencyCodes {
 		if _, ok := whitelistedCurrencies[c]; ok {
 			out = append(out, c)
 		}
 	}
-	
+
 	return elapsed.Seconds(), out, err
 }
 
@@ -376,17 +332,6 @@ func (fe *frontendServer) timeCurrencyServiceCurrencyConversionRequest(ctx conte
 			From:   money,
 			ToCode: currency})
 	elapsed := time.Since(start)
-
-	// for err != nil {
-	// 	fmt.Println("error: timeCurrencyServiceCurrencyConversionRequest", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = currencyServiceClient.
-	// 			Convert(ctx, &pb.CurrencyConversionRequest{
-	// 				From:   money,
-	// 				ToCode: currency})	
-	// 	elapsed = time.Since(start)
-	// }
 
 	return elapsed.Seconds(), resp, err
 }
@@ -408,59 +353,30 @@ func (fe *frontendServer) timeCartServiceAddItemRequest(ctx context.Context, use
 	})
 	elapsed := time.Since(start)
 
-	// for err != nil {
-	// 	fmt.Println("error: timeCartServiceAddItemRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = cartServiceClient.AddItem(ctx, &pb.AddItemRequest{
-	// 		UserId: userID,
-	// 		Item: &pb.CartItem{
-	// 			ProductId: productID,
-	// 			Quantity:  quantity},
-	// 	})		
-	// 	elapsed = time.Since(start)
-	// }
-
 	return elapsed.Seconds(), resp, err
-} 
+}
 
 // Send 'GetCartRequest' to CartService, receive 'Cart'
 func (fe *frontendServer) timeCartServiceGetCartRequest(ctx context.Context, userID string) (float64, []*pb.CartItem, error) {
 	cartServiceClient := pb.NewCartServiceClient(fe.cartSvcConn)
-	
+
 	start := time.Now()
 	resp, err := cartServiceClient.GetCart(ctx, &pb.GetCartRequest{UserId: userID})
 	elapsed := time.Since(start)
 
-	// for err != nil {
-	// 	fmt.Println("error: timeCartServiceGetCartRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = cartServiceClient.GetCart(ctx, &pb.GetCartRequest{UserId: userID})
-	// 	elapsed = time.Since(start)
-	// }
-
 	return elapsed.Seconds(), resp.GetItems(), err
-} 
+}
 
 // Send 'EmptyCartRequest' to CartService, receive 'Empty'
 func (fe *frontendServer) timeCartServiceEmptyCartRequest(ctx context.Context, userID string) (float64, *pb.Empty, error) {
 	cartServiceClient := pb.NewCartServiceClient(fe.cartSvcConn)
 
-	start := time.Now()	
+	start := time.Now()
 	resp, err := cartServiceClient.EmptyCart(ctx, &pb.EmptyCartRequest{UserId: userID})
 	elapsed := time.Since(start)
 
-	// for err != nil {
-	// 	fmt.Println("error: timeCartServiceEmptyCartRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = cartServiceClient.EmptyCart(ctx, &pb.EmptyCartRequest{UserId: userID})
-	// 	elapsed = time.Since(start)
-	// }
-
 	return elapsed.Seconds(), resp, err
-} 
+}
 
 /********************************************************************/
 /* AdService */
@@ -470,21 +386,11 @@ func (fe *frontendServer) timeCartServiceEmptyCartRequest(ctx context.Context, u
 func (fe *frontendServer) timeAdServiceAdRequest(ctx context.Context, ctxKeys []string) (float64, []*pb.Ad, error) {
 	adServiceClient := pb.NewAdServiceClient(fe.adSvcConn)
 
-	start := time.Now()	
+	start := time.Now()
 	resp, err := adServiceClient.GetAds(ctx, &pb.AdRequest{
 		ContextKeys: ctxKeys,
 	})
 	elapsed := time.Since(start)
-
-	// for err != nil {
-	// 	fmt.Println("error: timeAdServiceAdRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = adServiceClient.GetAds(ctx, &pb.AdRequest{
-	// 		ContextKeys: ctxKeys,
-	// 	})	
-	// 	elapsed = time.Since(start)
-	// }
 
 	return elapsed.Seconds(), resp.GetAds(), err
 }
@@ -497,21 +403,11 @@ func (fe *frontendServer) timeAdServiceAdRequest(ctx context.Context, ctxKeys []
 func (fe *frontendServer) timePaymentServiceChargeRequest(ctx context.Context, amount *pb.Money, paymentInfo *pb.CreditCardInfo) (float64, string, error) {
 	paymentServiceClient := pb.NewPaymentServiceClient(fe.paymentSvcConn)
 
-	start := time.Now()	
+	start := time.Now()
 	resp, err := paymentServiceClient.Charge(ctx, &pb.ChargeRequest{
 		Amount:     amount,
 		CreditCard: paymentInfo})
 	elapsed := time.Since(start)
-
-	// for err != nil {
-	// 	fmt.Println("error: timePaymentServiceChargeRequest:", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = paymentServiceClient.Charge(ctx, &pb.ChargeRequest{
-	// 		Amount:     amount,
-	// 		CreditCard: paymentInfo})
-	// 	elapsed = time.Since(start)
-	// }
 
 	return elapsed.Seconds(), resp.GetTransactionId(), err
 }
@@ -524,21 +420,11 @@ func (fe *frontendServer) timePaymentServiceChargeRequest(ctx context.Context, a
 func (fe *frontendServer) timeEmailServiceSendOrderConfirmationRequest(ctx context.Context, email string, order *pb.OrderResult) (float64, *pb.Empty, error) {
 	emailServiceClient := pb.NewEmailServiceClient(fe.emailSvcConn)
 
-	start := time.Now()	
+	start := time.Now()
 	resp, err := emailServiceClient.SendOrderConfirmation(ctx, &pb.SendOrderConfirmationRequest{
 		Email: email,
 		Order: order})
 	elapsed := time.Since(start)
-
-	// for err != nil {
-	// 	fmt.Println("error: timeEmailServiceSendOrderConfirmationRequest", err)
-		
-	// 	start = time.Now()
-	// 	resp, err = emailServiceClient.SendOrderConfirmation(ctx, &pb.SendOrderConfirmationRequest{
-	// 		Email: email,
-	// 		Order: order})	
-	// 	elapsed = time.Since(start)
-	// }
 
 	return elapsed.Seconds(), resp, err
 }
