@@ -23,5 +23,10 @@ if [[ -z "${FRONTEND_ADDR}" ]]; then
     exit 1
 fi
 
+if [[ -z "${TRAFFIC}" ]]; then
+    echo >&2 "TRAFFIC not specified"
+    exit 1
+fi
+
 set -x
-locust --host="http://${FRONTEND_ADDR}" --no-web -c 1 -r 1
+locust --host="http://${FRONTEND_ADDR}" --no-web -c ${TRAFFIC} -r ${TRAFFIC}
