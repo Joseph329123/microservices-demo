@@ -17,7 +17,7 @@ kind: Config
 build:
   artifacts:
   # image tags are relative; to specify an image repo (e.g. GCR), you
-  # must provide a "default repo" using one of the methods described 
+  # must provide a "default repo" using one of the methods described
   # here:
   # https://skaffold.dev/docs/concepts/#image-repository-handling
   - image: emailservice
@@ -27,7 +27,7 @@ build:
   - image: recommendationservice
     context: src/recommendationservice
   - image: shippingservice
-    context: src/shippingservice
+    context: src/mockservices/shippingservice
   - image: checkoutservice
     context: src/checkoutservice
   - image: paymentservice
@@ -35,11 +35,11 @@ build:
   - image: currencyservice
     context: src/currencyservice
   - image: cartservice
-    context: src/cartservice
+    context: src/mockservices/cartservice
   - image: frontend
     context: src/frontend
-  - image: loadgenerator
-    context: src/loadgenerator
+  # - image: loadgenerator
+  #   context: src/loadgenerator
   - image: adservice
     context: src/adservice
   - image: testservice
@@ -49,7 +49,19 @@ build:
 deploy:
   kubectl:
     manifests:
-    - ./kubernetes-manifests/**.yaml
+    - ./kubernetes-manifests/adservice.yaml
+    - ./kubernetes-manifests/cartservice.yaml
+    - ./kubernetes-manifests/checkoutservice.yaml
+    - ./kubernetes-manifests/currencyservice.yaml
+    - ./kubernetes-manifests/emailservice.yaml
+    - ./kubernetes-manifests/frontend.yaml
+    - ./kubernetes-manifests/paymentservice.yaml
+    - ./kubernetes-manifests/productcatalogservice.yaml
+    - ./kubernetes-manifests/recommendationservice.yaml
+    - ./kubernetes-manifests/redis.yaml
+    - ./kubernetes-manifests/shippingservice.yaml
+    - ./kubernetes-manifests/testservice.yaml
+    # - ./kubernetes-manifests/loadgenerator.yaml
 profiles:
 # "travis-ci" profile is used to build the images without
 # pushing them.
