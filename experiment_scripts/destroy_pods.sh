@@ -3,7 +3,7 @@ echo "destroy_pods.sh"
 
 cd ..
 skaffold delete
-sleep 120s
+sleep 60s
 
 # if there are pods still terminating after 1 min we manually remove them
 terminating_pods=($(kubectl get pods | grep Terminating | awk '{print $1}'))
