@@ -7,7 +7,7 @@ deploy() {
     # https://github.com/GoogleCloudPlatform/microservices-demo
     # skaffold run --default-repo=gcr.io/[PROJECT_ID]
     skaffold run
-    
+
     # IF pods aren't ready in three min (i.e. excessive CrashLoopBackoff), restart deployment)
     end=$((SECONDS+300))
     while [ $flag -eq 1 ] && [ $SECONDS -lt $end ]
@@ -33,14 +33,23 @@ deploy() {
         done
     done
 
-    cd experiment_scripts
+    # we need the testservice to be the last pod deployed
+    # so it is taking measurements WITH the simulated users (loadgen running)
+    if [ $flag -eq 0 ]
+    then
+        test_service_name=$(kubectl get pods | grep testservice | awk '{print $1}')
+        kubectl delete pod $test_service_name
+        sleep 10s
+        kubectl get pods
+    fi
+
 }
 
 main() {
     local flag=1
     deploy
 
-    # IF pods aren't ready in three min (i.e. excessive CrashLoopBackoff), restart deployment)
+    # IF pods aren't ready in three min (i.e. excessive CrashLoopBackoff), restart deployment
     while [ $flag -eq 1 ]
     do
         echo destroying pods and restarting deployment
