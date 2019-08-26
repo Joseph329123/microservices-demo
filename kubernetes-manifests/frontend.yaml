@@ -28,6 +28,8 @@ spec:
       containers:
         - name: server
           image: frontend
+          #image: gcr.io/liquid-champion-244004/frontend:v1
+          #imagePullPolicy: Always
           ports:
           - containerPort: 8080
           readinessProbe:
