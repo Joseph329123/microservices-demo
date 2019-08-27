@@ -38,8 +38,8 @@ build:
     context: src/mockservices/cartservice
   - image: frontend
     context: src/frontend
-  # - image: loadgenerator
-  #   context: src/loadgenerator
+  - image: loadgenerator
+    context: src/loadgenerator
   - image: adservice
     context: src/adservice
   - image: testservice
@@ -61,7 +61,7 @@ deploy:
     - ./kubernetes-manifests/redis.yaml
     - ./kubernetes-manifests/shippingservice.yaml
     - ./kubernetes-manifests/testservice.yaml
-    # - ./kubernetes-manifests/loadgenerator.yaml
+    - ./kubernetes-manifests/loadgenerator.yaml
 profiles:
 # "travis-ci" profile is used to build the images without
 # pushing them.
